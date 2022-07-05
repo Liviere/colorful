@@ -25,7 +25,6 @@ const Home: NextPage = () => {
 
 				const gf = new Graphics();
 
-				// @ts-ignore
 				const app = new Application({
 					// render to <canvas class="orb-canvas"></canvas>
 					view: canvasRef.current,
@@ -35,7 +34,7 @@ const Home: NextPage = () => {
 					transparent: true,
 				});
 
-				for (let i = 0; i < 3; i++) {
+				for (let i = 0; i < 10; i++) {
 					// each orb will be black, just for now
 					const orb = new Orb(gf, colorPalette.randomColor());
 					app.stage.addChild(orb.graphics);
