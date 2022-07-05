@@ -9,11 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixi/filter-kawase-blur": "^4.1.5",
+    "hsl-to-hex": "^1.0.0",
     "next": "12.2.0",
+    "pixi.js": "^6.4.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "simplex-noise": "^3.0.1"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^12.2.0",
     "@types/node": "18.0.1",
     "@types/react": "18.0.14",
     "@types/react-dom": "18.0.6",
