@@ -1,15 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
+import ReinventedColorWheel from 'reinvented-color-wheel';
+import 'reinvented-color-wheel/css/reinvented-color-wheel.min.css';
 
+import { useEffectOnce } from 'hooks/useEffectOnce';
 import { ColorPalette, Orb } from 'util/classes';
+import { debounce } from 'util/debounce';
 
 const Home: NextPage = () => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const palleteRef = useRef<ColorPalette>();
 	const orbsRef = useRef<Orb[]>();
+	const whellObjectRef = useRef<any>(null);
+	const wheelElementRef = useRef<HTMLDivElement>(null);
+	const [hsl, setHsl] = useState<[number, number, number]>([0, 100, 50]);
 
-	useEffect(() => {
+	useEffectOnce(() => {
 		// Create orbs
 		const orbs: Orb[] = [];
 		const colorPalette = new ColorPalette();
@@ -60,8 +67,81 @@ const Home: NextPage = () => {
 					});
 				}
 			}
-		})().then(() => console.log('done'));
-	}, []);
+		})();
+	});
+
+	useEffectOnce(() => {
+		if (wheelElementRef.current) {
+			const colorWheel = new ReinventedColorWheel({
+				// appendTo is the only required property. specify the parent element of the color wheel.
+				appendTo: wheelElementRef.current,
+
+				// followings are optional properties and their default values.
+
+				// initial color (can be specified in hsv / hsl / rgb / hex)
+				// hsv: [0, 100, 100],
+				hsl: hsl,
+				// rgb: [255, 0, 0],
+				// hex: "#ff0000",
+
+				// appearance
+				wheelDiameter: 20,
+				wheelThickness: 20,
+				handleDiameter: 16,
+				wheelReflectsSaturation: true,
+
+				// handler
+				onChange: function (color) {
+					setHsl([...color.hsl]);
+				},
+			});
+
+			whellObjectRef.current = colorWheel;
+			// set color in HSV / HSL / RGB / HEX
+			colorWheel.hsl = [120, 100, 50];
+
+			// get color in HSV / HSL / RGB / HEX
+
+			// please call redraw() after changing some appearance properties.
+			colorWheel.wheelDiameter = 400;
+			colorWheel.wheelThickness = 40;
+			colorWheel.redraw();
+		}
+	});
+
+	useEffect(() => {
+		// the only argument is the ReinventedColorWheel instance itself.
+		document.documentElement.style.setProperty(
+			'--hue',
+			// @ts-ignore
+			hsl[0]
+		);
+		document.documentElement.style.setProperty(
+			'--saturation',
+			// @ts-ignore
+			`${hsl[1]}%`
+		);
+		document.documentElement.style.setProperty(
+			'--lightness',
+			// @ts-ignore
+			`${hsl[2]}%`
+		);
+
+		if (palleteRef.current)
+			debounce(
+				() => {
+					palleteRef.current?.setColors(hsl[0]);
+					orbsRef.current?.forEach((orb) => {
+						orb.fill = palleteRef.current?.randomColor();
+					});
+				},
+				100,
+				'setColors'
+			);
+		whellObjectRef.current.hsl = hsl;
+		whellObjectRef.current.redraw();
+	}, [hsl]);
+
 	return (
 		<div>
 			<Head>
@@ -75,42 +155,38 @@ const Home: NextPage = () => {
 				<div className="overlay__inner">
 					{/* <!-- Title --> */}
 					<h1 className="overlay__title">
-						Hey, would you like to learn how to create a{' '}
-						<span className="text-gradient">generative</span> UI just like this?
+						This is a <span className="text-gradient">generative</span> UI
+						example.
 					</h1>
 					{/* <!-- Description --> */}
 					<p className="overlay__description">
-						In this tutorial we will be creating a generative “orb” animation
-						using pixi.js, picking some lovely random colors, and pulling it all
-						together in a nice frosty UI.
-						<strong>We&apos;re gonna talk accessibility, too.</strong>
+						A generative “orb” animation is made with{' '}
+						<a href="https://pixijs.com/">pixi.js</a> engine. You can change the
+						current color using the color wheel or with a randomizing button.
+						<br />
+						<strong> Have fun!</strong>
 					</p>
 					{/* <!-- Buttons --> */}
-					<div className="overlay__btns">
-						<button className="overlay__btn overlay__btn--transparent">
-							Tutorial out Feb 2, 2021
-						</button>
-						<button
-							className="overlay__btn overlay__btn--colors"
-							onClick={() => {
-								if (palleteRef.current && orbsRef.current) {
-									const pallete = palleteRef.current;
-									pallete.setColors();
-									pallete.setCustomProperties();
+					<div className="overlay__btns"></div>
 
-									orbsRef.current.forEach((orb) => {
-										orb.fill = pallete.randomColor();
-									});
-								}
-							}}
-						>
-							<span>Randomise Colors</span>
-							<span className="overlay__btn-emoji">🎨</span>
-						</button>
+					<div className="color-wheel-container">
+						<div ref={wheelElementRef} />
 					</div>
+					<button
+						className="overlay__btn overlay__btn--colors"
+						onClick={() => {
+							if (palleteRef.current && orbsRef.current) {
+								palleteRef.current;
+								const hue = palleteRef.current.getRandomColor();
+								setHsl([hue, hsl[1], hsl[2]]);
+							}
+						}}
+					>
+						<span>Randomise Colors</span>
+						<span className="overlay__btn-emoji">🎨</span>
+					</button>
 				</div>
 			</main>
-
 			<canvas ref={canvasRef} className="orb-canvas"></canvas>
 		</div>
 	);

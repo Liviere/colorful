@@ -2,6 +2,7 @@ import SimplexNoise from 'simplex-noise';
 import hsl from 'hsl-to-hex';
 
 import { map, random } from 'util/helpers';
+import { debounce } from 'util/debounce';
 
 // Orb class
 export class Orb {
@@ -30,7 +31,6 @@ export class Orb {
 		this.inc = 0.002;
 
 		// PIXI.Graphics is used to draw 2d primitives (in this case a circle) to the canvas
-		console.log('gf', gf);
 		this.graphics = gf;
 		this.graphics.alpha = 0.825;
 
@@ -69,7 +69,7 @@ export class Orb {
 		const maxDist =
 			window.innerWidth < 1000 ? window.innerWidth / 3 : window.innerWidth / 5;
 		// the { x, y } origin for each orb (the bottom right of the screen)
-		const originX = window.innerWidth / 1.25;
+		const originX = window.innerWidth / 1.8;
 		const originY =
 			window.innerWidth < 1000
 				? window.innerHeight
@@ -112,14 +112,23 @@ export class ColorPalette {
 		this.setCustomProperties();
 	}
 
-	setColors() {
+	getRandomColor() {
+		return ~~random(0, 360);
+	}
+
+	setColors(hue = -1) {
 		// pick a random hue somewhere between 220 and 360
-		this.hue = ~~random(220, 360);
+		this.hue = hue !== -1 ? hue : ~~random(0, 360);
 		this.complimentaryHue1 = this.hue + 30;
 		this.complimentaryHue2 = this.hue + 60;
 		// define a fixed saturation and lightness
-		this.saturation = 95;
-		this.lightness = 50;
+
+		this.saturation = parseInt(
+			document.documentElement.style.getPropertyValue('--saturation')
+		);
+		this.lightness = parseInt(
+			document.documentElement.style.getPropertyValue('--lightness')
+		);
 
 		// define a base color
 		this.baseColor = hsl(this.hue, this.saturation, this.lightness);
@@ -155,32 +164,5 @@ export class ColorPalette {
 	setCustomProperties() {
 		// set CSS custom properties so that the colors defined here can be used throughout the UI
 		document.documentElement.style.setProperty('--hue', this.hue);
-		document.documentElement.style.setProperty(
-			'--hue-complimentary1',
-			this.complimentaryHue1
-		);
-		document.documentElement.style.setProperty(
-			'--hue-complimentary2',
-			this.complimentaryHue2
-		);
 	}
 }
-
-const debounce = (() => {
-	const timers = { leading: false };
-	const LEADING = 'leading';
-	// if the last argument of callback is true then debounce trigger function
-	// before wait
-	return function (callback, ms, uniqueId, leading = false) {
-		if (leading && !timers[LEADING]) {
-			callback();
-			timers['leading'] = true;
-		} else {
-			if (timers[uniqueId]) clearTimeout(timers[uniqueId]);
-			timers[uniqueId] = setTimeout(() => {
-				if (!timers[LEADING]) callback();
-				timers[LEADING] = false;
-			}, ms);
-		}
-	};
-})();
